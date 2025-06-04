@@ -3,6 +3,8 @@
 @using Models
 @using Services
 @using Layout
+@using StateContainers
+@inject UserStateContainer userStateContainer
 @layout CustomLayout
 @inject AmbulanceBookingService AmbulanceBookingService
 @inject NavigationManager NavigationManager
@@ -81,6 +83,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var user = userStateContainer._user;
+        if (user == null)
+        {
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
         if (AmbulanceBookingId != 0)
         {
 			

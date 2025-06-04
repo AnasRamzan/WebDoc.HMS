@@ -3,6 +3,8 @@
 @using Services
 @using Models
 @using Layout
+@using StateContainers
+@inject UserStateContainer userStateContainer
 @layout CustomLayout
 @inject DoctorService DoctorService
 @inject NavigationManager NavigationManager
@@ -57,6 +59,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var user = userStateContainer._user;
+        if (user == null)
+        {
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
         if (DoctorId != 0)
         {
             try

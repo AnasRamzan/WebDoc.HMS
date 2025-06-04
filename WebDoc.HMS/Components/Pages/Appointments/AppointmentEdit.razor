@@ -3,6 +3,8 @@
 @using Services
 @using Models
 @using Layout
+@using StateContainers
+@inject UserStateContainer userStateContainer
 @layout CustomLayout
 @inject AppointmentService AppointmentService
 @inject DoctorService DoctorService
@@ -73,6 +75,11 @@
 
     protected override async Task OnInitializedAsync()
     {
+        var user = userStateContainer._user;
+        if (user == null)
+        {
+            NavigationManager.NavigateTo("/", forceLoad: true);
+        }
         try
         {
             doctors = await DoctorService.GetDoctorsAsync();
