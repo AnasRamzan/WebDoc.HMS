@@ -1,0 +1,113 @@
+﻿@page "/appointments/add"
+@page "/appointments/edit/{AppointmentId:int}"
+@using Services
+@using Models
+@using Layout
+@layout CustomLayout
+@inject AppointmentService AppointmentService
+@inject DoctorService DoctorService
+@inject PatientService PatientService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@(AppointmentId == 0 ? "Add Appointment" : "Edit Appointment")</PageTitle>
+
+<h3>@(AppointmentId == 0 ? "Add Appointment" : "Edit Appointment")</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="appointment" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label class="form-label">Doctor</label>
+        <InputSelect class="form-control" @bind-Value="appointment.DoctorId">
+            <option value="0">Select Doctor</option>
+            @foreach (var doctor in doctors)
+            {
+                <option value="@doctor.DoctorId">@doctor.Name</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Patient</label>
+        <InputSelect class="form-control" @bind-Value="appointment.PatientId">
+            <option value="0">Select Patient</option>
+            @foreach (var patient in patients)
+            {
+                <option value="@patient.PatientId">@patient.Name</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Appoinment Date</label>
+        <InputDate class="form-control" @bind-Value="appointment.AppointmentDate" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Reason</label>
+        <InputText class="form-control" @bind-Value="appointment.Reason" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Status</label>
+        <InputSelect class="form-control" @bind-Value="appointment.Status">
+            <option value="Scheduled">Scheduled</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+        </InputSelect>
+    </div>
+    <button type="submit" class="btn btn-danger">Save</button>
+    <a href="/appointments" class="btn btn-dark">Cancel</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int AppointmentId { get; set; }
+
+    private Appointment appointment = new() { Status = "Scheduled", AppointmentDate = DateTime.Now };
+    private List<Doctor> doctors = new();
+    private List<Patient> patients = new();
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            doctors = await DoctorService.GetDoctorsAsync();
+            patients = await PatientService.GetPatientsAsync();
+            if (AppointmentId != 0)
+            {
+                appointment = (await AppointmentService.GetAppointmentsAsync()).FirstOrDefault(a => a.AppointmentId == AppointmentId) ?? new Appointment { Status = "Scheduled", AppointmentDate = DateTime.Now };
+                if (appointment.AppointmentId == 0)
+                    errorMessage = $"Appointment with ID {AppointmentId} not found.";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading appointment: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (AppointmentId == 0)
+            {
+                await AppointmentService.AddAppointmentAsync(appointment);
+            }
+            else
+            {
+                appointment.AppointmentId = AppointmentId;
+                await AppointmentService.UpdateAppointmentAsync(appointment);
+            }
+            NavigationManager.NavigateTo("/appointments");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving appointment: {ex.Message}";
+        }
+    }
+}

@@ -1,0 +1,124 @@
+﻿@page "/ambulance-bookings/add"
+@page "/ambulance-bookings/edit/{AmbulanceBookingId:int}"
+@using Models
+@using Services
+@using Layout
+@layout CustomLayout
+@inject AmbulanceBookingService AmbulanceBookingService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@(AmbulanceBookingId == 0 ? "Add Ambulance Booking" : "Edit Ambulance Booking")</PageTitle>
+
+<h3>@(AmbulanceBookingId == 0 ? "Add Ambulance Booking" : "Edit Ambulance Booking")</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="booking" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="mb-3">
+        <label class="form-label">Booker Name</label>
+        <InputText class="form-control" @bind-Value="booking.BookerName" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Destination</label>
+        <InputText class="form-control" @bind-Value="booking.Destination" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Distance (km)</label>
+        <InputNumber class="form-control" @bind-Value="booking.Distance" />
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Additional Charges</label>
+        <InputNumber class="form-control" @bind-Value="booking.AdditionalCharges" />
+    </div>
+
+    @*< div class="mb-3">
+        <label class="form-label">Charges</label>
+        <InputNumber class="form-control" @bind-Value="booking.Charges" />
+    </div> *@
+
+    @* <div class="mb-3">
+        <label class="form-label">Fuel Consumed</label>
+        <InputNumber class="form-control" @bind-Value="booking.FuelConsumed" />
+    </div> *@
+
+    <div class="mb-3">
+        <label class="form-label">Status</label>
+        <InputSelect class="form-control" @bind-Value="booking.Status">
+            <option value="">-- Select Status --</option>
+            <option value="Pending">Pending</option>
+            <option value="In Transit">In Transit</option>
+            <option value="Completed">Completed</option>
+            <option value="Cancelled">Cancelled</option>
+        </InputSelect>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Contact</label>
+        <InputText class="form-control" @bind-Value="booking.Contact" />
+    </div>
+
+    <button type="submit" class="btn btn-danger">Save</button>
+    <a href="/ambulance-bookings" class="btn btn-dark">Cancel</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int AmbulanceBookingId { get; set; }
+    private int petrolRate = 300; // to calculate charges
+    private int ambulanceMilage = 13;
+    private AmbulanceBooking booking = new();
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AmbulanceBookingId != 0)
+        {
+			
+            try
+            {
+                booking = (await AmbulanceBookingService.GetAmbulanceBookingsAsync())
+                    .FirstOrDefault(b => b.AmbulanceBookingId == AmbulanceBookingId) ?? new AmbulanceBooking();
+
+                if (booking.AmbulanceBookingId == 0)
+                    errorMessage = $"Booking with ID {AmbulanceBookingId} not found.";
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error loading booking: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            booking.Charges = (((decimal)booking.Distance * petrolRate) + booking.AdditionalCharges); //calculating charges using formula
+            booking.FuelConsumed = ((decimal)booking.Distance / ambulanceMilage); //calculating fuel consumed using formula
+            if (AmbulanceBookingId == 0)
+            {
+                await AmbulanceBookingService.AddAmbulanceBookingAsync(booking);
+            }
+            else
+            {
+                booking.AmbulanceBookingId = AmbulanceBookingId;
+                await AmbulanceBookingService.UpdateAmbulanceBookingAsync(booking);
+            }
+            NavigationManager.NavigateTo("/ambulance-bookings");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving booking: {ex.Message}";
+        }
+    }
+}

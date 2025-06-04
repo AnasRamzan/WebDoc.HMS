@@ -1,0 +1,84 @@
+﻿@page "/appointments"
+@using Services
+@using Models
+@using Layout
+@layout CustomLayout
+@inject AppointmentService AppointmentService
+@inject DoctorService DoctorService
+@inject PatientService PatientService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Manage Appointments</PageTitle>
+
+<h3>Manage Appointments</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<a href="/appointments/add" class="btn btn-danger mb-3">Add Appointment</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Doctor</th>
+            <th>Patient</th>
+            <th>Date</th>
+            <th>Reason</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var appointment in appointments)
+        {
+            <tr>
+                <td>@doctors.FirstOrDefault(d => d.DoctorId == appointment.DoctorId)?.Name</td>
+                <td>@patients.FirstOrDefault(p => p.PatientId == appointment.PatientId)?.Name</td>
+                <td>@appointment.AppointmentDate.ToString("yyyy-MM-dd")</td>
+                <td>@appointment.Reason</td>
+                <td>@appointment.Status</td>
+                <td>
+                    <a href="/appointments/edit/@appointment.AppointmentId" class="btn btn-danger btn-sm">Edit</a>
+                    <button class="btn btn-dark btn-sm" @onclick="() => DeleteAppointment(appointment.AppointmentId)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Appointment> appointments = new();
+    private List<Doctor> doctors = new();
+    private List<Patient> patients = new();
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            appointments = await AppointmentService.GetAppointmentsAsync();
+            doctors = await DoctorService.GetDoctorsAsync();
+            patients = await PatientService.GetPatientsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading appointments: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteAppointment(int appointmentId)
+    {
+        try
+        {
+            await AppointmentService.DeleteAppointmentAsync(appointmentId);
+            appointments = await AppointmentService.GetAppointmentsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting appointment: {ex.Message}";
+        }
+    }
+}

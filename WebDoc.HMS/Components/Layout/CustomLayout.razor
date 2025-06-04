@@ -1,0 +1,33 @@
+﻿@* @inherits LayoutComponentBase
+
+<div class="navbar-expand">
+    <TopBar />
+</div>
+<div class="page">*@
+    
+    @* <div class="sidebar">
+        <NavMenu/>
+    </div> *@
+
+    @*<main>
+        
+
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div> *@
+@inherits LayoutComponentBase
+
+<div class="d-flex flex-column min-vh-100">
+    <div>
+        <TopBar />
+        
+    </div>
+
+    <main class="flex-grow-1">
+        <article class="content px-4">
+            @Body
+        </article>
+    </main>
+</div>

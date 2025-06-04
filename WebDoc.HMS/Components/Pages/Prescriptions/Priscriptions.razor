@@ -1,0 +1,85 @@
+﻿@page "/prescriptions"
+@using Services
+@using Models
+@using Layout
+@layout CustomLayout
+@inject PrescriptionService PrescriptionService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Manage Prescriptions</PageTitle>
+
+<h3>Manage Prescriptions</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<a href="/prescriptions/add" class="btn btn-danger mb-3">Add Prescription</a>
+
+<table class="table col-md-10">
+    <thead>
+        <tr>
+            <th>Prescription ID</th>
+            <th>Appointment ID</th>
+            <th>Medication</th>
+            <th>Dosage</th>
+            <th>Instructions</th>
+            <th>Issue Date</th>
+            <th colspan="2">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var prescription in prescriptions)
+        {
+            <tr>
+                <td>@prescription.PrescriptionId</td>
+                <td>@prescription.AppointmentId</td>
+                <td>@prescription.Medication</td>
+                <td>@prescription.Dosage</td>
+                <td>@prescription.Instructions</td>
+                <td>@prescription.IssueDate.ToString("dd-MM-yyyy")</td>
+                <td>
+                    <a href="/prescriptions/edit/@prescription.PrescriptionId" class="btn btn-danger btn-sm">Edit</a>
+                </td>
+                <td>
+                    <button class="btn btn-dark btn-sm" @onclick="() => DeletePrescription(prescription.PrescriptionId)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Prescription> prescriptions = new();
+    private string errorMessage;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            prescriptions = await PrescriptionService.GetPrescriptionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading prescriptions: {ex.Message}";
+        }
+    }
+
+    private async Task DeletePrescription(int prescriptionId)
+    {
+        try
+        {
+            await PrescriptionService.DeletePrescriptionAsync(prescriptionId);
+            prescriptions = await PrescriptionService.GetPrescriptionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting prescription: {ex.Message}";
+        }
+    }
+}

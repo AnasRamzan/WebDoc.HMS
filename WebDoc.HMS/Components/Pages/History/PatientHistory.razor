@@ -1,0 +1,147 @@
+﻿@page "/patient-history/{AppointmentID:int}"
+@using Services
+@using Models
+@using Layout
+@layout CustomLayout
+@inject PrescriptionService PrescriptionService
+@inject AppointmentService AppointmentService
+@inject DoctorService DoctorService
+@inject PatientService PatientService
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Patient History</PageTitle>
+
+<div class="p-4 mb-4 bg-danger bg-opacity-25 text-danger rounded shadow-sm">
+    <h3 class="fw-bold">Patient History</h3>
+    <h6 class="fw-bold">Patient ID: @patient.PatientId</h6>
+    <h6 class="fw-bold">Patient Name: @patient.Name</h6>
+    <h6 class="fw-bold">Date Of Birth: @patient.DateOfBirth.ToString("yyyy-MM-dd")</h6>
+    @{
+        var age = DateTime.Now.Year - patient.DateOfBirth.Year;
+        if (DateTime.Now.Date < patient.DateOfBirth.AddYears(age)) age--;
+    }
+    <h6 class="fw-bold">Age: @age</h6>
+    <h6 class="fw-bold">Gender: @patient.Gender</h6>
+    <h6 class="fw-bold">Contact: @patient.Contact</h6>
+    <h6 class="fw-bold">Address: @patient.Address</h6>
+</div>
+
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+@* <a href="/prescriptions/add" class="btn btn-success mb-3">Add Prescription</a>
+ *@
+
+<div class="row">
+    <!-- Appointments Table -->
+    <div class="col-md-6">
+        <h4 class="fw-normal text-white bg-dark p-2 rounded">Previous Appointments</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Doctor</th>
+                    <th>Date</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var appointment in appointments)
+                {
+                    @if((appointment.AppointmentId != AppointmentID) && (appointment.Status == "Completed"))
+                    {
+                        <tr>
+                            <td>@doctors.FirstOrDefault(d => d.DoctorId == appointment.DoctorId)?.Name</td>
+                            <td>@appointment.AppointmentDate.ToString("yyyy-MM-dd")</td>
+                            <td>@appointment.Reason</td>
+                            <td>@appointment.Status</td>
+                        </tr>
+                    }                   
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Prescriptions Table -->
+    <div class="col-md-6">
+        <h4 class="fw-normal text-white bg-dark p-2 rounded">Previous Prescriptions</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Medication</th>
+                    <th>Dosage</th>
+                    <th>Instructions</th>
+                    <th>Issue Date</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var prescription in prescriptions)
+                {
+                    <tr>
+                        <td>@prescription.Medication</td>
+                        <td>@prescription.Dosage</td>
+                        <td>@prescription.Instructions</td>
+                        <td>@prescription.IssueDate.ToString("dd-MM-yyyy")</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+<a href="/prescriptions/prescribe/@AppointmentID" class="btn btn-danger btn-sm">Prescribe Patient</a>
+
+
+@code {
+    [Parameter]
+    public int AppointmentID { get; set; }
+
+    private List<Prescription> prescriptions = new();
+
+    private List<Appointment> appointments = new();
+
+    private List<Doctor> doctors = new();
+
+    //private List<Patient> patients = new();
+
+    private Patient patient = new();
+
+    private string errorMessage;
+
+
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            prescriptions = await PrescriptionService.GetPrescriptionsOfAPatientAsync(AppointmentID);
+            appointments = await AppointmentService.GetAppointmentsOfAPatientAsync(AppointmentID);
+            doctors = await DoctorService.GetDoctorsAsync();
+            patient = await PatientService.GetPatientByAppointmentIDAsync(AppointmentID);
+
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading prescriptions: {ex.Message}";
+        }
+    }
+
+    private async Task DeletePrescription(int prescriptionId)
+    {
+        try
+        {
+            await PrescriptionService.DeletePrescriptionAsync(prescriptionId);
+            prescriptions = await PrescriptionService.GetPrescriptionsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting prescription: {ex.Message}";
+        }
+    }
+}

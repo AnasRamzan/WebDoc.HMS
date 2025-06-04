@@ -1,0 +1,123 @@
+﻿@page "/prescriptions/add"
+@page "/prescriptions/edit/{PrescriptionId:int}"
+@page "/prescriptions/prescribe/{AppointmentId:int}"
+
+@using Services
+@using Models
+@using Layout
+@layout CustomLayout
+@inject PrescriptionService PrescriptionService
+@inject AppointmentService AppointmentService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@(PrescriptionId == 0 ? "Add Prescription" : "Edit Prescription")</PageTitle>
+
+<h3>@(PrescriptionId == 0 ? "Add Prescription" : "Edit Prescription")</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="prescription" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label class="form-label">Appointment</label>
+        <InputSelect class="form-control" @bind-Value="prescription.AppointmentId">
+            <option value="0">Select Appointment</option>
+            @foreach (var appointment in appointments)
+            {
+                <option value="@appointment.AppointmentId">Appointment #@appointment.AppointmentId</option>
+            }
+        </InputSelect>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Medication</label>
+        <InputText class="form-control" @bind-Value="prescription.Medication" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Dosage</label>
+        <InputText class="form-control" @bind-Value="prescription.Dosage" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Instructions</label>
+        <InputTextArea class="form-control" @bind-Value="prescription.Instructions" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Issue Date</label>
+        <InputDate class="form-control" @bind-Value="prescription.IssueDate" />
+    </div>
+    <button type="submit" class="btn btn-danger">Save</button>
+    <a href="/prescriptions" class="btn btn-dark">Cancel</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int PrescriptionId { get; set; } = 0;
+
+    [Parameter]
+    public int AppointmentId { get; set; } = 0;
+
+    private Prescription prescription = new() { IssueDate = DateTime.Today };
+    private List<Appointment> appointments = new();
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            appointments = await AppointmentService.GetAppointmentsAsync();
+            if (PrescriptionId != 0)
+            {
+                prescription = (await PrescriptionService.GetPrescriptionsAsync()).FirstOrDefault(p => p.PrescriptionId == PrescriptionId) ?? new Prescription { IssueDate = DateTime.Today };
+                if (prescription.PrescriptionId == 0)
+                    errorMessage = $"Prescription with ID {PrescriptionId} not found.";
+            }
+            else if (AppointmentId != 0)
+            {
+                prescription.AppointmentId = AppointmentId;
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading prescription: {ex.Message}";
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (PrescriptionId == 0)
+            {
+                await PrescriptionService.AddPrescriptionAsync(prescription);
+            }
+            else
+            {
+                prescription.PrescriptionId = PrescriptionId;
+                await PrescriptionService.UpdatePrescriptionAsync(prescription);
+            }
+            Appointment appointment = (appointments).FirstOrDefault(p => p.AppointmentId == AppointmentId);
+            appointment.Status = "Completed";
+            Console.WriteLine( $"appointment: {appointment.PatientId}, {appointment.AppointmentId}");
+            await AppointmentService.UpdateAppointmentAsync(appointment);
+
+            if(AppointmentId != 0)
+            {
+                NavigationManager.NavigateTo("/dashboard");
+
+            }
+            else
+            {
+                NavigationManager.NavigateTo("/prescriptions");
+
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving prescription: {ex.Message}";
+        }
+    }
+}

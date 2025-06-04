@@ -1,0 +1,47 @@
+﻿@layout CustomLayout
+<nav class="navbar navbar-expand-lg navbar-dark bg-custom-color px-3">
+@*     <a class="navbar-brand" href="/">WEBDOC HMS</a>
+ *@ 
+    @* <a class="navbar-brand" href="/">
+        <span style="color: black, ;">WEB</span><span style="color: white;">DOC</span> HMS
+    </a> *@
+
+   @*  <a class="navbar-brand" href="/">
+        <span style="color: black; font-weight: bold;">WEB</span><span style="color: white; font-weight: bold;">DOC</span> <span  style="font-size: 12px;">HMS</span>
+    </a> *@
+
+    <a class="navbar-brand" href="/" style="font-size: 16px;">
+        <span style="color: black; font-weight: bold;">WEB</span>
+        <span style="color: white; font-weight: bold;">DOC</span>
+        <span style="color: black;font-size: 50%;">HMS</span>
+    </a>
+
+
+    <div class="collapse navbar-collapse">
+        <ul class="navbar-nav me-auto">
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/">Change Account</NavLink>
+            </li>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="/dashboard">Dashboard</NavLink>
+            </li>
+            <!-- Add more links here -->
+            @* <li>
+                <ThemeSwitcher />
+            </li> *@
+        </ul>
+        <div class="float-end">
+            <ThemeSwitcher Position="DropdownMenuPosition.End" />
+        </div>
+        
+    </div>
+</nav>
+<style>
+    .bi-circle-half,
+    .bi-sun-fill,
+    .bi-moon-stars-fill {
+        color: white !important;
+    }
+</style>
+
+

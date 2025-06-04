@@ -1,0 +1,95 @@
+﻿@page "/doctors/add"
+@page "/doctors/edit/{DoctorId:int}"
+@using Services
+@using Models
+@using Layout
+@layout CustomLayout
+@inject DoctorService DoctorService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>@(DoctorId == 0 ? "Add Doctor" : "Edit Doctor")</PageTitle>
+
+<h3>@(DoctorId == 0 ? "Add Doctor" : "Edit Doctor")</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<EditForm Model="doctor" OnValidSubmit="HandleSubmit">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+    <div class="mb-3">
+        <label class="form-label">Name</label>
+        <InputText class="form-control" @bind-Value="doctor.Name" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Specialty</label>
+        <InputText class="form-control" @bind-Value="doctor.Specialty" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fee</label>
+        <InputNumber class="form-control" @bind-Value="doctor.Fee" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Timing</label>
+        <InputText class="form-control" @bind-Value="doctor.Timing" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Contact</label>
+        <InputText class="form-control" @bind-Value="doctor.Contact" />
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Email</label>
+        <InputText class="form-control" @bind-Value="doctor.Email" />
+    </div>
+    <button type="submit" class="btn btn-danger">Save</button>
+    <a href="/doctors" class="btn btn-dark">Cancel</a>
+</EditForm>
+
+@code {
+    [Parameter]
+    public int DoctorId { get; set; }
+
+    private Doctor doctor = new();
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (DoctorId != 0)
+        {
+            try
+            {
+                doctor = (await DoctorService.GetDoctorsAsync()).FirstOrDefault(d => d.DoctorId == DoctorId) ?? new Doctor();
+                if (doctor.DoctorId == 0)
+                    errorMessage = $"Doctor with ID {DoctorId} not found.";
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Error loading doctor: {ex.Message}";
+            }
+        }
+    }
+
+    private async Task HandleSubmit()
+    {
+        try
+        {
+            if (DoctorId == 0)
+            {
+                await DoctorService.AddDoctorAsync(doctor);
+            }
+            else
+            {
+                doctor.DoctorId = DoctorId;
+                await DoctorService.UpdateDoctorAsync(doctor);
+            }
+            NavigationManager.NavigateTo("/doctors");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving doctor: {ex.Message}";
+        }
+    }
+}

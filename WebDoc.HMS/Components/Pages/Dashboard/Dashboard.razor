@@ -1,0 +1,253 @@
+﻿@page "/dashboard"
+@using Services
+@using Models
+@using Layout
+@layout CustomLayout
+@inject DoctorService DoctorService
+@inject PatientService PatientService
+@inject AppointmentService AppointmentService
+@inject PrescriptionService PrescriptionService
+@inject AmbulanceBookingService AmbulanceBookingService
+
+@using StateContainers
+@inject UserStateContainer userStateContainer
+@inject NavigationManager NavigationManager
+
+@rendermode InteractiveServer
+<PageTitle>@user.Role Dashboard</PageTitle>
+
+<div class="p-4 mb-4 bg-danger bg-opacity-25 text-danger rounded shadow-sm">
+    <h3 class="fw-bold">@user.Role Dashboard</h3>
+    <h4 class="fw-normal">Hello @user.Name, perform your tasks easily!</h4>
+</div>
+
+@* <h4 class="fw-normal text-white bg-dark p-2 rounded">You can manage the following records</h4>
+ *@
+
+@if(user.Role=="Admin")@*If role is admin*@
+{
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    <h4 class="fw-normal text-white bg-dark p-2 rounded">You can manage the following records</h4>
+
+    <div class="row justify-content-center mt-3 mb-3">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light border-danger shadow-sm">
+                <div class="card-body text-dark">
+                    <h5 class="card-title text-danger">Doctors</h5>
+                    <p class="card-text">Total Doctors: @doctors.Count</p>
+                    <a href="/doctors" class="btn btn-danger btn-sm">Manage Doctors</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light border-dark shadow-sm">
+                <div class="card-body text-dark">
+                    <h5 class="card-title text-black">Patients</h5>
+                    <p class="card-text">Total Patients: @patients.Count</p>
+                    <a href="/patients" class="btn btn-dark btn-sm">Manage Patients</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card bg-white border-danger shadow-sm">
+                <div class="card-body text-dark">
+                    <h5 class="card-title text-danger">Appointments</h5>
+                    <p class="card-text">Today's Appointments: @todayAppointments.Count</p>
+                    <a href="/appointments" class="btn btn-danger btn-sm">Manage Appointments</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light border-black shadow-sm">
+                <div class="card-body text-dark">
+                    <h5 class="card-title text-black">Prescriptions</h5>
+                    <p class="card-text">Today's Prescriptions: @prescriptions.Count</p>
+                    <a href="/prescriptions" class="btn btn-dark btn-sm">Manage Prescriptions</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light border-danger shadow-sm">
+                <div class="card-body text-dark">
+                    <h5 class="card-title text-danger">Ambulance Bookings</h5>
+                    <p class="card-text">Total Ambulance Bookings: @ambulanceBookings.Count</p>
+                    <a href="/ambulance-bookings" class="btn btn-danger btn-sm">Manage Ambulance Bookings</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+
+}@* if role is Admin *@
+else if (user.Role == "Receptionist")@* if role is Receptionist *@
+{
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger">@errorMessage</div>
+    }
+    <h4 class="fw-normal text-white bg-dark p-2 rounded">You can manage the following records</h4>
+
+
+    
+        <div class="row justify-content-center mt-3 mb-3">
+            <div class="col-md-3 mb-4">
+                <div class="card bg-light border-dark shadow-sm">
+                    <div class="card-body text-dark">
+                        <h5 class="card-title text-black">Patients</h5>
+                        <p class="card-text">Total Patients: @patients.Count</p>
+                        <a href="/patients" class="btn btn-dark btn-sm">Manage Patients</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card bg-light border-danger shadow-sm">
+                    <div class="card-body text-dark">
+                        <h5 class="card-title text-danger">Appointments</h5>
+                        <p class="card-text">Today's Appointments: @todayAppointments.Count</p>
+                        <a href="/appointments" class="btn btn-danger btn-sm">Manage Appointments</a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-3 mb-4">
+                <div class="card bg-light border-dark shadow-sm">
+                    <div class="card-body text-dark">
+                        <h5 class="card-title text-black">Ambulance Bookings</h5>
+                        <p class="card-text">Total Ambulance Bookings: @ambulanceBookings.Count</p>
+                        <a href="/ambulance-bookings" class="btn btn-dark btn-sm">Manage Ambulance Bookings</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+    <h4 class="fw-normal text-white bg-dark p-2 rounded">Today's Appointments</h4>
+
+@*     <h4 class="mt-3">Today's Appointments</h4>
+ *@    <div class="row card">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Doctor</th>
+                    <th>Patient</th>
+                    <th>Date</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var appointment in todayAppointments)
+                {
+                    <tr>
+                        <td>@doctors.FirstOrDefault(d => d.DoctorId == appointment.DoctorId)?.Name</td>
+                        <td>@patients.FirstOrDefault(p => p.PatientId == appointment.PatientId)?.Name</td>
+                        <td>@appointment.AppointmentDate.ToString("yyyy-MM-dd")</td>
+                        <td>@appointment.Reason</td>
+                        <td>@appointment.Status</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}@* if role is Receptionist *@
+else if (user.Role == "Doctor")@* if role is Doctor *@
+{
+   @*  <div class="row">
+        <div class="col-md-3 mb-4">
+            <div class="card bg-light border-black shadow-sm">
+                <div class="card-body text-dark">
+                    <h5 class="card-title text-black">Prescriptions</h5>
+                    <p class="card-text">Today's Prescriptions: @prescriptions.Count</p>
+                    <a href="/prescriptions" class="btn btn-dark btn-sm">Manage Prescriptions</a>
+                </div>
+            </div>
+        </div>
+    </div> *@
+    <h4 class="fw-normal text-white bg-dark p-2 rounded">Booked Appointments to Treat</h4>
+
+
+    <table class="table ">
+        <thead>
+            <tr>
+                <th>Appointment ID</th>
+                <th>Doctor</th>
+                <th>Patient</th>
+                <th>Date</th>
+                <th>Reason</th>
+                <th>Status</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var appointment in todayAppointments)
+            {
+                <tr>
+                    <td>@appointment.AppointmentId</td>
+                    <td>@doctors.FirstOrDefault(d => d.DoctorId == appointment.DoctorId)?.Name</td>
+                    <td>@patients.FirstOrDefault(p => p.PatientId == appointment.PatientId)?.Name</td>
+                    <td>@appointment.AppointmentDate.ToString("yyyy-MM-dd")</td>
+                    <td>@appointment.Reason</td>
+                    <td>@appointment.Status</td>
+                    <td>
+                        <a href="/patient-history/@appointment.AppointmentId" class="btn btn-danger btn-sm">Treat Patient</a>
+                </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    
+}@* if role is Doctor *@
+
+@code {
+    private List<Doctor> doctors = new();
+    private List<Patient> patients = new();
+    private List<Appointment> todayAppointments = new();
+    private List<Prescription> prescriptions = new();
+	private List<AmbulanceBooking> ambulanceBookings = new();
+    private string errorMessage;
+    private User user = new User();
+
+    // protected override void OnInitialized()
+    // {
+    //     base.OnInitialized();
+    //     user = userStateContainer._user;
+    // }
+
+    protected override async Task OnInitializedAsync()
+    {
+        user = userStateContainer._user;
+		if (user == null)
+		{
+			NavigationManager.NavigateTo("/", forceLoad: true);
+		}
+        try
+        {
+            doctors = await DoctorService.GetDoctorsAsync();
+            patients = await PatientService.GetPatientsAsync();
+            prescriptions = await PrescriptionService.GetPrescriptionsAsync();
+			ambulanceBookings = await AmbulanceBookingService.GetAmbulanceBookingsAsync();
+            var allAppointments = await AppointmentService.GetAppointmentsAsync();
+            todayAppointments = allAppointments
+                .Where(a => a.AppointmentDate.Date == DateTime.Today && a.Status == "Scheduled")
+                .ToList();
+            var allPrescriptions = await PrescriptionService.GetPrescriptionsAsync();
+            prescriptions = allPrescriptions
+                .Where(a => a.IssueDate == DateTime.Today)
+                .ToList();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading dashboard: {ex.Message}";
+        }
+    }
+}

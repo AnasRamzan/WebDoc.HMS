@@ -1,0 +1,82 @@
+﻿@page "/ambulance-bookings"
+@using WebDoc.HMS.Models
+@using WebDoc.HMS.Services
+@using Layout
+@layout CustomLayout
+@inject AmbulanceBookingService AmbulanceBookingService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Manage Ambulance Bookings</PageTitle>
+
+<h3>Manage Ambulance Bookings</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<a href="/ambulance-bookings/add" class="btn btn-danger mb-3">Add Booking</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Booker Name</th>
+            <th>Destination</th>
+            <th>Distance (km)</th>
+            <th>Charges</th>
+            <th>Fuel Consumed</th>
+            <th>Status</th>
+            <th>Contact</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var booking in bookings)
+        {
+            <tr>
+                <td>@booking.BookerName</td>
+                <td>@booking.Destination</td>
+                <td>@booking.Distance</td>
+                <td>Rs: @booking.Charges</td>
+                <td>@booking.FuelConsumed litres</td>
+                <td>@booking.Status</td>
+                <td>@booking.Contact</td>
+                <td>
+                    <a href="/ambulance-bookings/edit/@booking.AmbulanceBookingId" class="btn btn-danger btn-sm">Edit</a>
+                    <button class="btn btn-dark btn-sm" @onclick="() => DeleteBooking(booking.AmbulanceBookingId)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<AmbulanceBooking> bookings = new();
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            bookings = await AmbulanceBookingService.GetAmbulanceBookingsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading bookings: {ex.Message}";
+        }
+    }
+
+    private async Task DeleteBooking(int bookingId)
+    {
+        try
+        {
+            await AmbulanceBookingService.DeleteAmbulanceBookingAsync(bookingId);
+            bookings = await AmbulanceBookingService.GetAmbulanceBookingsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting booking: {ex.Message}";
+        }
+    }
+}

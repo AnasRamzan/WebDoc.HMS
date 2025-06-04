@@ -1,0 +1,110 @@
+﻿@*
+    File: Components/Pages/Account/Register.razor
+    Description: User registration page.
+*@
+@page "/Signup"
+@using Models
+@using Layout
+@layout AccountLayout
+@rendermode InteractiveServer
+@using Services
+@inject SignupService signupService
+
+@using System.ComponentModel.DataAnnotations
+
+<PageTitle>Register - WEBDOC HMS</PageTitle>
+
+<div class="card light-transparent-card shadow-sm">
+    <div class="card-body">
+        <h3 class="card-title text-center mb-4">Create Account</h3>
+        <EditForm Model="@registerModel" OnValidSubmit="HandleRegistration" FormName="registerForm">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label for="name" class="form-label">Name</label>
+                <InputText id="name" class="form-control" @bind-Value="registerModel.Name" placeholder="User" />
+                <ValidationMessage For="@(() => registerModel.Name)" class="form-text text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="role" class="form-label">Role</label>
+                <InputSelect id="role" @bind-Value="registerModel.Role" class="form-select">
+                    <option value="">-- Select Role --</option>
+                    <option value="Doctor">Doctor</option>
+                    <option value="Receptionist">Receptionist</option>
+                    <option value="Admin">Admin</option>
+                </InputSelect>
+
+@*                 <InputText id="role" class="form-control" @bind-Value="registerModel.Role" placeholder="Receptionist" />
+ *@                <ValidationMessage For="@(() => registerModel.Role)" class="form-text text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email address</label>
+                <InputText id="email" class="form-control" @bind-Value="registerModel.Email" placeholder="name@example.com" />
+                <ValidationMessage For="@(() => registerModel.Email)" class="form-text text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="registerModel.Password" placeholder="Password" />
+                <ValidationMessage For="@(() => registerModel.Password)" class="form-text text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                <InputText id="confirmPassword" type="password" class="form-control" @bind-Value="registerModel.ConfirmPassword" placeholder="Confirm Password" />
+                <ValidationMessage For="@(() => registerModel.ConfirmPassword)" class="form-text text-danger" />
+            </div>
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @errorMessage
+                </div>
+            }
+            @if (!string.IsNullOrEmpty(successMessage))
+            {
+                <div class="alert alert-success" role="alert">
+                    @successMessage
+                </div>
+            }
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-danger">Register</button>
+            </div>
+        </EditForm>
+        <hr />
+        <div class="text-center">
+            <p class="mb-0">Already have an account? <a href="/" style="color:red">Login here</a></p>
+        </div>
+    </div>
+</div>
+
+@code {
+    private User registerModel = new User();
+    private string? errorMessage;
+    private string? successMessage;
+    bool isSignedup = false;
+
+    private async Task HandleRegistration()
+    {
+        errorMessage = null;
+        successMessage = null;
+        Console.WriteLine($"Registration attempt for: {registerModel.Email}");
+
+        // Simulate an API call
+        isSignedup = await signupService.RegisterUserAsync(registerModel);
+		if (isSignedup)
+		{
+			successMessage = "Registration successful! You can now log in.";
+			registerModel = new User(); // Reset the form
+		}
+		else
+		{
+			errorMessage = "Registration failed. Please try again.";
+		}
+       
+        StateHasChanged(); // Ensure UI updates
+    }
+}

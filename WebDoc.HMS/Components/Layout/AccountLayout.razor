@@ -1,0 +1,39 @@
+﻿@*
+    File: Components/Layout/AccountLayout.razor
+    Description: A minimal layout for login, register, and other account-related pages.
+*@
+@inherits LayoutComponentBase
+
+<div class="container">
+    <main role="main" class="pb-3">
+        <div class="row justify-content-center">
+            <div class="col-md-6 col-lg-5 col-xl-4">
+                @* A simple logo or app name can go here *@
+                <div class="text-center my-4">
+                    <a href="/" class="navbar-brand" style="font-size: 1.75rem;">
+                        <span style="color: white; font-weight: bold;">WEB</span>
+                        <span style="color: red; font-weight: bold;">DOC</span>
+                        <span style="color: white; font-size: 50%;">HMS</span>
+                    </a>
+                   
+                </div>
+                @Body
+            </div>
+        </div>
+    </main>
+</div>
+
+<style>
+
+    body {
+        background: linear-gradient(to bottom, #000000, #ff4d4d); /* Black to bright red */
+        margin: 0;
+        padding: 0;
+    }
+
+    .container {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+    }     
+</style>

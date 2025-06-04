@@ -1,0 +1,112 @@
+﻿@*
+    File: Components/Pages/Account/Login.razor
+    Description: User login page.
+*@
+@page "/"
+@using Layout
+@layout AccountLayout
+@rendermode InteractiveServer
+
+@using System.ComponentModel.DataAnnotations
+@inject NavigationManager NavigationManager
+@using Models
+@using Services
+@inject LoginService loginService
+
+@using StateContainers
+@inject UserStateContainer userStateContainer
+
+<PageTitle>Login - WEBDOC HMS</PageTitle>
+
+<div class="card light-transparent-card shadow-sm">
+    <div class="card-body">
+        <h3 class="card-title text-center mb-4">Login</h3>
+
+        @* <div class="float-end">
+            <ThemeSwitcher Position="DropdownMenuPosition.End" DefaultTheme="dark" />
+        </div> *@
+
+        <EditForm Model="@loginModel" OnValidSubmit="HandleLogin" FormName="loginForm">
+            <DataAnnotationsValidator />
+
+            <div class="mb-3">
+                <label for="email" class="form-label">Email address</label>
+                <InputText id="email" class="form-control" @bind-Value="loginModel.Email" placeholder="name@example.com" />
+                <ValidationMessage For="@(() => loginModel.Email)" class="form-text text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <InputText id="password" type="password" class="form-control" @bind-Value="loginModel.Password" placeholder="Password" />
+                <ValidationMessage For="@(() => loginModel.Password)" class="form-text text-danger" />
+            </div>
+
+            @* <div class="mb-3 form-check">
+                <InputCheckbox id="rememberMe" class="form-check-input" @bind-Value="loginModel.RememberMe" />
+                <label class="form-check-label" for="rememberMe">Remember me</label>
+            </div> *@
+
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger" role="alert">
+                    @errorMessage
+                </div>
+            }
+
+            <div class="d-grid">
+                <button type="submit" class="btn btn-danger">Login</button>
+            </div>
+        </EditForm>
+        <hr />
+        <div class="text-center">
+            <p class="mb-0">Don't have an account? <a href="/Signup" style="color:red;">Register here</a></p>
+            @* Add a link for "Forgot Password?" if needed *@
+            @* <p class="mt-2"><a href="/forgot-password">Forgot password?</a></p> *@
+        </div>
+    </div>
+</div>
+
+@code {
+
+    private LoginModel loginModel = new LoginModel();
+    private string? errorMessage;
+    User loggedInUser = null;
+
+
+
+    protected override void OnInitialized()
+    {
+        userStateContainer.set_user(null);
+
+    }
+
+    private async Task HandleLogin()
+    {
+        errorMessage = null;
+
+        Console.WriteLine($"Login attempt for: {loginModel.Email}");
+        loggedInUser = await loginService.LoginUserAsync(loginModel);
+        if (loggedInUser.Name != "" && loggedInUser != null)
+        {
+            if(loggedInUser.Password == loginModel.Password)
+            {
+                Console.WriteLine("login successful!");
+
+                userStateContainer.set_user(loggedInUser);
+
+                NavigationManager.NavigateTo("/dashboard", forceLoad: true); // forceLoad to ensure layout re-renders if auth state changes
+
+            }
+            else
+            {
+                errorMessage = "Invalid password.";
+
+            }
+        }
+        else
+        {
+            errorMessage = "Invalid email.";
+        }
+        StateHasChanged(); // Ensure UI updates
+    }
+}

@@ -1,0 +1,78 @@
+﻿@page "/patients"
+@using Services
+@using Models
+@using Layout
+@layout CustomLayout
+@inject PatientService PatientService
+@inject NavigationManager NavigationManager
+@rendermode InteractiveServer
+
+<PageTitle>Manage Patients</PageTitle>
+
+<h3>Manage Patients</h3>
+
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger">@errorMessage</div>
+}
+
+<a href="/patients/add" class="btn btn-danger mb-3">Add Patient</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Date of Birth</th>
+            <th>Gender</th>
+            <th>Contact</th>
+            <th>Address</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var patient in patients)
+        {
+            <tr>
+                <td>@patient.Name</td>
+                <td>@patient.DateOfBirth.ToString("dd-MM-yyyy")</td>
+                <td>@patient.Gender</td>
+                <td>@patient.Contact</td>
+                <td>@patient.Address</td>
+                <td>
+                    <a href="/patients/edit/@patient.PatientId" class="btn btn-danger btn-sm">Edit</a>
+                    <button class="btn btn-dark btn-sm" @onclick="() => DeletePatient(patient.PatientId)">Delete</button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+@code {
+    private List<Patient> patients = new();
+    private string errorMessage;
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            patients = await PatientService.GetPatientsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading patients: {ex.Message}";
+        }
+    }
+
+    private async Task DeletePatient(int patientId)
+    {
+        try
+        {
+            await PatientService.DeletePatientAsync(patientId);
+            patients = await PatientService.GetPatientsAsync();
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error deleting patient: {ex.Message}";
+        }
+    }
+}
